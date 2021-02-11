@@ -31,7 +31,8 @@ namespace olc
 
         float                           fCharWidth;
         float                           fCharHeight;
-        std::vector<vi2d>               vFontSpacing;
+        std::vector<std::pair<olc::vi2d, olc::vi2d> > vGlyphPositionsMono;
+        std::vector<std::pair<olc::vi2d, olc::vi2d> > vGlyphPositionsProp;
     };
 }
 
@@ -49,33 +50,40 @@ namespace olc
         // Get the font information embedded in the last row of pixels
         auto lastRow = fontSprite->height - 1;
         auto pixelValue = fontSprite->GetPixel( 0, lastRow );
-
+        int nCharWidth = fontSprite->width / 16;
+        int nCharHeight = (fontSprite->height-1) / 6;
+        
         if( pixelValue == olc::Pixel('F','O','N','T') )
         {
             // FONT signature found - presume the pixels contain valid font information
-            fCharWidth  = fontSprite->width / 16.0f;
-            fCharHeight = (fontSprite->height-1) / 6.0f;
-            
             uint32_t nFormatVersion = fontSprite->GetPixel( 1, lastRow ).n;
             int nOffset             = fontSprite->GetPixel( 2, lastRow ).n;
-            
+           
             for( auto i=0; i < 96; i++ )
             {
-                int nWidth = fontSprite->GetPixel( 3+i, lastRow ).n;
-                vFontSpacing.push_back( {nOffset, nWidth} );
+                int nWidth  = fontSprite->GetPixel( 3+i, lastRow ).n;
+                int x       = i % 16 * nCharWidth + nOffset;
+                int y       = i / 16 * nCharHeight;
+                vGlyphPositionsMono.push_back( std::make_pair<olc::vi2d, olc::vi2d>( {x,y}, {nCharWidth, nCharHeight-1}) );
+                vGlyphPositionsProp.push_back( std::make_pair<olc::vi2d, olc::vi2d>( {x,y}, {nWidth, nCharHeight-1}) );
             }
         }
         else
         {
             // No "FONT" signature found on last pixel row : presume this is simply a png
             // of 96 evenly spaced character images in 6 rows of 16 chars.
-            fCharWidth  = fontSprite->width / 16.0f;
-            fCharHeight = fontSprite->height / 6.0f;
+            nCharHeight = fontSprite->height / 6;
             for( auto i=0; i < 96; i++ )
             {
-                vFontSpacing.push_back( {0, int(fCharWidth)} );
+                int x = i % 16 * nCharWidth;
+                int y = i / 16 * nCharHeight;
+                vGlyphPositionsMono.push_back( std::make_pair<olc::vi2d, olc::vi2d>( {x,y}, {nCharWidth, nCharHeight-1}) );
+                vGlyphPositionsProp.push_back( std::make_pair<olc::vi2d, olc::vi2d>( {x,y}, {nCharWidth, nCharHeight-1}) );
             }
         }
+
+        fCharWidth  = float(nCharWidth);
+        fCharHeight = float(nCharHeight);
     }
 
 
@@ -101,7 +109,7 @@ namespace olc
 		for (auto c : s)
 		{
 			if (c == '\n') { pos.y += 1;  pos.x = 0; }
-			else pos.x += vFontSpacing[c - 32].y;
+			else pos.x += vGlyphPositionsProp[c-32].second.x;
 			size.x = std::max(size.x, pos.x);
 			size.y = std::max(size.y, pos.y);
 		}
@@ -122,9 +130,8 @@ namespace olc
 			}
 			else
 			{
-				int32_t ox = (c - 32) % 16;
-				int32_t oy = (c - 32) / 16;
-				pge->DrawPartialDecal(pos + spos, fontDecal.get(), { float(ox) * fCharWidth, float(oy) * fCharHeight }, { fCharWidth, fCharHeight }, scale, col);
+                auto& glyph = vGlyphPositionsMono[c-32];
+				pge->DrawPartialDecal(pos + spos, fontDecal.get(), glyph.first, glyph.second, scale, col);
 				spos.x += fCharWidth * scale.x;
 			}
 		}
@@ -139,13 +146,11 @@ namespace olc
 			if (c == '\n')
 			{
 				spos.x = center.x; spos.y -= fCharHeight;
-
 			}
 			else
 			{
-				int32_t ox = (c - 32) % 16;
-				int32_t oy = (c - 32) / 16;
-				pge->DrawPartialRotatedDecal(pos, fontDecal.get(), fAngle, spos, { float(ox) * fCharWidth, float(oy) * fCharHeight }, { fCharWidth, fCharHeight }, scale, col);
+                auto& glyph = vGlyphPositionsMono[c-32];
+				pge->DrawPartialRotatedDecal(pos, fontDecal.get(), fAngle, spos, glyph.first, glyph.second, scale, col);
 				spos.x -= fCharWidth;
 			}
 		}
@@ -163,12 +168,9 @@ namespace olc
 			}
 			else
 			{
-				int32_t ox = (c - 32) % 16;
-				int32_t oy = (c - 32) / 16;
-				pge->DrawPartialDecal(pos + spos, fontDecal.get(), 
-                                        { float(ox) * fCharWidth + float(vFontSpacing[c - 32].x), float(oy) * fCharHeight }, 
-                                        { float(vFontSpacing[c - 32].y), fCharHeight }, scale, col);
-				spos.x += float(vFontSpacing[c - 32].y) * scale.x;
+                auto& glyph = vGlyphPositionsProp[c-32];
+				pge->DrawPartialDecal(pos + spos, fontDecal.get(), glyph.first, glyph.second, scale, col);
+				spos.x += glyph.second.x * scale.x;
 			}
 		}
 	}
@@ -186,13 +188,9 @@ namespace olc
 			}
 			else
 			{
-				int32_t ox = (c - 32) % 16;
-				int32_t oy = (c - 32) / 16;
-
-				pge->DrawPartialRotatedDecal(pos, fontDecal.get(), fAngle, spos, 
-                                            { float(ox) * fCharWidth + float(vFontSpacing[c - 32].x), float(oy) * fCharHeight }, 
-                                            { float(vFontSpacing[c - 32].y), fCharHeight }, scale, col);
-                spos.x -= float(vFontSpacing[c - 32].y);
+                auto& glyph = vGlyphPositionsProp[c-32];
+				pge->DrawPartialRotatedDecal(pos, fontDecal.get(), fAngle, spos, glyph.first, glyph.second, scale, col);
+				spos.x -= glyph.second.x;
 			}
 		}
     }

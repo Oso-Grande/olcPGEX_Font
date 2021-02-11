@@ -74,7 +74,7 @@ namespace olc
                 int nWidth          = fontSprite->GetPixel( pixelX, pixelY ).n;
                 uint32_t nGlyph     = fontSprite->GetPixel( pixelX+1, pixelY ).n;
                 int x               = i % nCharsPerRow * nCharWidth + nOffset;
-                int y               = i / nCharsPerRow * nCharWidth;
+                int y               = i / nCharsPerRow * nCharHeight;
                 mGlyphPositionsMono.emplace( nGlyph, std::make_pair<olc::vi2d, olc::vi2d>( {x,y}, {nCharWidth,nCharHeight-1}) );
                 mGlyphPositionsProp.emplace( nGlyph, std::make_pair<olc::vi2d, olc::vi2d>( {x,y}, {nWidth, nCharHeight-1}) );
             }
@@ -149,7 +149,6 @@ namespace olc
 			if (c == '\n')
 			{
 				spos.x = center.x; spos.y -= fCharHeight;
-
 			}
 			else
 			{
