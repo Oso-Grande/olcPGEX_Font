@@ -15,14 +15,14 @@ private:
     std::unique_ptr<olc::CustomFont> emojiFont;
 
 public:
-	Example()
-	{
-		sAppName = "Font Extension Example";
-	}
+    Example()
+    {
+        sAppName = "Font Extension Example";
+    }
 
 public:
-	bool OnUserCreate() override
-	{
+    bool OnUserCreate() override
+    {
         // Create the font objects now the engine is started
         // The font pngs have been created using the python script generatecustomfont.py
         // eg.    python generatecustomfont.py keifont.ttf 50 glyphs.txt
@@ -32,27 +32,27 @@ public:
         keiFont = std::make_unique<olc::CustomFont>( "./keifont.png" );
         emojiFont = std::make_unique<olc::CustomFont>( "./NotoEmoji-Regular.png" );
 
-		return true;
-	}
+        return true;
+    }
 
-	bool OnUserUpdate(float fElapsedTime) override
-	{
+    bool OnUserUpdate(float fElapsedTime) override
+    {
         Clear( olc::WHITE );
 
         static float fAngle = 0.0f;
         fAngle += fElapsedTime;
 
-        // Create some text to render - notice using wstring 
-        std::wstring kei_text   = L"こんにちは世界";
-        std::wstring emoji_text = L"😊😉😍😘😚😜😂\n😝😳😁😣😢😭😰";
+        // Create some text to render - utf-8 encoded std::string 
+        std::string kei_text = "\xe3\x81\x93\xe3\x82\x93\xe3\x81\xab\xe3\x81\xa1\xe3\x81\xaf\xe4\xb8\x96\xe7\x95\x8c";  // u8"こんにちは世界";
+        std::string emoji_text = "\xf0\x9f\x98\x8a\xf0\x9f\x98\x89\xf0\x9f\x98\x8d\xf0\x9f\x98\x98\xf0\x9f\x98\x9a\xf0\x9f\x98\x9c\xf0\x9f\x98\x82\n\xf0\x9f\x98\x9d\xf0\x9f\x98\xb3\xf0\x9f\x98\x81\xf0\x9f\x98\xa3\xf0\x9f\x98\xa2\xf0\x9f\x98\xad\xf0\x9f\x98\xb0"; // u8"😊😉😍😘😚😜😂\n😝😳😁😣😢😭😰";
 
         // Get the string dimensions for rendering proportionally
         auto kei_size   = keiFont->GetTextSizeProp( kei_text );
         auto emoji_size = emojiFont->GetTextSizeProp( emoji_text );
 
         // Compute the centre points so we can rotate about them
-        auto kei_centre = kei_size / 2.0f;
-        auto emoji_centre = emoji_size / 2.0f;
+        auto kei_centre = kei_size / 2;
+        auto emoji_centre = emoji_size / 2;
 
         auto fScale = 0.5f + std::abs( std::cos( fAngle ) );
 
@@ -61,16 +61,16 @@ public:
         emojiFont->DrawRotatedStringPropDecal( {400,400}, emoji_text, fAngle, emoji_centre, olc::BLACK, {fScale, fScale}  );
         
         return true;
-	}
+    }
 };
 
 
 int main()
 {
-	Example demo;
-	if (demo.Construct(800, 600, 1, 1))
-		demo.Start();
+    Example demo;
+    if (demo.Construct(800, 600, 1, 1))
+        demo.Start();
 
-	return 0;
+    return 0;
 }
 

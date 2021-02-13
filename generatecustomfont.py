@@ -133,11 +133,12 @@ if __name__ == "__main__":
         _fail_with_usage()
 
     if os.path.exists( glyphsetfilename ):
-        with open( glyphsetfilename ) as f:
+        with open( glyphsetfilename, encoding="utf-8" ) as f:
             text = f.read()
             glyphset = set()
             for c in text:
-                glyphset.add( c )
+                if c not in "\t\r\n":
+                    glyphset.add( c )
     else:
         print( f"Unable to load the glyph set file {glyphsetfilename}\n" )
 

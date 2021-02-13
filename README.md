@@ -54,7 +54,7 @@ The olc::Font() constructor will attempt to discover the embedded metrics in the
 ## Creating a custom unicode font (for use with olc::CustomFont)
 
 A custom font is simply a png file that has been generated using the supplied script (generatecustomfont.py) 
-The script generatecustomfont.py takes the following arguments on the command line : a font file name, a pointsize and a text filename (the text file should contain all the unicode characters you want in your resulting font file).
+The script generatecustomfont.py takes the following arguments on the command line : a font file name, a pointsize and a text filename (the text file should be utf-8 encoded and contain all the unicode characters you want in your resulting font file).
 
 eg. 
 ```
@@ -63,15 +63,15 @@ python generatecustomfont.py keifont.ttf 40 glyphs_required.txt
 
 (You will need a python3.6 and above interpreter with the Pillow module installed. [pip install pillow] )
 
-#####Important:
-The file ***glyphs_required.txt*** is a txt file that can contain any unicode characters you wish to be able to render. A list of used unique characters will be extracted and those characters will be built into the png along with the unicode mappings and glyph positions (as data embedded into the png pixel data itself). The olc::CustomFont() constructor will detect that this png is a custom font and be able to render the glyphs within it.
+####Important:
+The file ***glyphs_required.txt*** in the example above is a txt file that can contain any unicode characters you wish to be able to render. This text file should be utf-8 encoded. A list of used unique characters will be extracted and those characters will be built into the png along with the unicode mappings and glyph positions (as data embedded into the png pixel data itself). The olc::CustomFont() constructor will detect that this png is a custom font and be able to render the glyphs within it.
 
 Example of the contents of glyphs_required.txt :-
 ```
 こんにちは世界
 ```
 
-#####NOTE:Only the characters in this text file will be part of the font.
+####NOTE:Only the characters in this text file will be part of the font.
 
 
 This special png actually contains not only the glyphs but also the necessary font metrics encoded into the pixel data itself.
